@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/localization/extensions.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
 import 'common/section_wrapper.dart';
@@ -39,6 +40,7 @@ class _CountdownSectionState extends State<CountdownSection> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final days = _remaining.inDays;
     final hours = _remaining.inHours % 24;
     final minutes = _remaining.inMinutes % 60;
@@ -50,14 +52,14 @@ class _CountdownSectionState extends State<CountdownSection> {
       backgroundColor: AppColors.emerald.withOpacity(0.25),
       child: Column(
         children: [
-          const SectionTitle(
-            eyebrow: 'COUNTING DOWN TO',
-            title: 'Our Forever Begins In',
+          SectionTitle(
+            eyebrow: l10n.countingDown,
+            title: l10n.ourForeverBegins,
           ),
           const SizedBox(height: 48),
           if (hasArrived)
             Text(
-              "It's Our Wedding Day! 🎉",
+              l10n.itsWeddingDay,
               style: AppTextStyles.heading(size: 26, color: AppColors.gold),
             )
           else
@@ -66,10 +68,10 @@ class _CountdownSectionState extends State<CountdownSection> {
               runSpacing: 20,
               alignment: WrapAlignment.center,
               children: [
-                _TimeBox(value: days, label: 'Days', compact: isMobile),
-                _TimeBox(value: hours, label: 'Hours', compact: isMobile),
-                _TimeBox(value: minutes, label: 'Minutes', compact: isMobile),
-                _TimeBox(value: seconds, label: 'Seconds', compact: isMobile),
+                _TimeBox(value: days, label: l10n.days, compact: isMobile),
+                _TimeBox(value: hours, label: l10n.hours, compact: isMobile),
+                _TimeBox(value: minutes, label: l10n.minutes, compact: isMobile),
+                _TimeBox(value: seconds, label: l10n.seconds, compact: isMobile),
               ],
             ),
         ],
@@ -127,7 +129,7 @@ class _TimeBox extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            label.toUpperCase(),
+            label,
             style: AppTextStyles.label(size: compact ? 9 : 11),
           ),
         ],

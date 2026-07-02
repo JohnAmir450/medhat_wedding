@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/localization/extensions.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
 
@@ -87,7 +88,7 @@ class _CouplePhoto extends StatelessWidget {
     return Center(
       child: Container(
         width: size,
-        height: size,
+        height: size, // Fixed height ensures the container stays a perfect square
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
@@ -100,30 +101,32 @@ class _CouplePhoto extends StatelessWidget {
             ),
           ],
         ),
-        child: CircleAvatar(
-          child: Image.asset(
-            AppConstants.coupleImagePath,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) {
-              // Falls back to a remote URL if one is configured and the
-              // bundled asset can't be found, then finally to a plain icon.
-              final remoteUrl = AppConstants.coupleImageUrl;
-              if (remoteUrl != null) {
-                return Image.network(
-                  remoteUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _photoFallback(),
-                );
-              }
-              return _photoFallback();
-            },
+        child: ClipOval(
+          child: SizedBox(
+            width: size - 12,  // accounting for padding
+            height: size - 12, // same as width = perfect circle
+            child: Image.asset(
+              AppConstants.coupleImagePath,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) {
+                final remoteUrl = AppConstants.coupleImageUrl;
+                if (remoteUrl != null) {
+                  return Image.network(
+                    remoteUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _photoFallback(),
+                  );
+                }
+                return _photoFallback();
+              },
+            ),
           ),
         ),
-      ),
-    )
-        .animate()
-        .fadeIn(duration: 900.ms, curve: Curves.easeOut)
-        .scale(begin: const Offset(0.85, 0.85), curve: Curves.easeOutBack);
+      )
+          .animate()
+          .fadeIn(duration: 900.ms, curve: Curves.easeOut)
+          .scale(begin: const Offset(0.85, 0.85), curve: Curves.easeOutBack),
+    );
   }
 
   Widget _photoFallback() => Container(
@@ -139,21 +142,24 @@ class _InvitationText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isArabic = l10n.isArabic;
     final crossAxis =
         center ? CrossAxisAlignment.center : CrossAxisAlignment.start;
     final textAlign = center ? TextAlign.center : TextAlign.left;
+    final effectiveTextAlign = isArabic ? TextAlign.center : textAlign;
 
     return Column(
       crossAxisAlignment: crossAxis,
       children: [
-        Text('The Wedding Of', style: AppTextStyles.label())
+        Text(l10n.theWeddingOf, style: AppTextStyles.label())
             .animate()
             .fadeIn(delay: 200.ms, duration: 700.ms)
             .slideY(begin: 0.3, end: 0),
         const SizedBox(height: 18),
         Text(
-          '${AppConstants.brideName}\n& ${AppConstants.groomName}',
-          textAlign: textAlign,
+          '${l10n.brideName}\n${l10n.coupleAnd} ${l10n.groomName}',
+          textAlign: effectiveTextAlign,
           style: AppTextStyles.script(size: 72),
         )
             .animate()
@@ -164,13 +170,13 @@ class _InvitationText extends StatelessWidget {
         const SizedBox(height: 28),
         Text(
           AppConstants.weddingDateLabel,
-          textAlign: textAlign,
+          textAlign: effectiveTextAlign,
           style: AppTextStyles.heading(size: 22, weight: FontWeight.w500),
         ).animate().fadeIn(delay: 650.ms, duration: 700.ms),
         const SizedBox(height: 8),
         Text(
           AppConstants.weddingTimeLabel,
-          textAlign: textAlign,
+          textAlign: effectiveTextAlign,
           style: AppTextStyles.body(size: 16),
         ).animate().fadeIn(delay: 750.ms, duration: 700.ms),
         const SizedBox(height: 36),
@@ -188,10 +194,12 @@ class _ScrollHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('SCROLL TO EXPLORE', style: AppTextStyles.label(size: 11)),
+        Text(l10n.scrollToExplore, style: AppTextStyles.label(size: 11)),
         const SizedBox(width: 8),
         const Icon(Icons.arrow_downward_rounded,
             color: AppColors.gold, size: 16),

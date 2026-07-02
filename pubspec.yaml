@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # State management
   flutter_bloc: ^8.1.5
@@ -25,7 +27,7 @@ dependencies:
   google_maps_flutter: ^2.7.0
 
   # Utils
-  intl: ^0.19.0
+  intl: ^0.20.2
   url_launcher: ^6.3.0
   responsive_framework: ^1.4.0
   uuid: ^4.4.0
@@ -41,6 +43,8 @@ flutter:
 
   assets:
     - assets/images/
+    # Uncomment when you add a splash GIF:
+    # - assets/gifs/
 
   # Optional: bundle fonts locally instead of using google_fonts network fetch
   # fonts:

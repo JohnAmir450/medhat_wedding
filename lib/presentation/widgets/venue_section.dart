@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/localization/extensions.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
 import 'common/section_wrapper.dart';
@@ -19,14 +20,16 @@ class VenueSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isArabic = l10n.isArabic;
     final isMobile = Responsive.isMobile(context);
 
     return SectionWrapper(
       child: Column(
         children: [
-          const SectionTitle(
-            eyebrow: 'JOIN US AT',
-            title: 'Wedding Ceremony & Reception',
+          SectionTitle(
+            eyebrow: l10n.joinUsAt,
+            title: l10n.ceremonyTitle,
           ),
           const SizedBox(height: 48),
           Container(
@@ -42,7 +45,7 @@ class VenueSection extends StatelessWidget {
                     color: AppColors.gold, size: 40),
                 const SizedBox(height: 20),
                 Text(
-                  AppConstants.venueName,
+                  isArabic ? AppConstants.venueNameAr : AppConstants.venueName,
                   textAlign: TextAlign.center,
                   style: AppTextStyles.heading(size: 24),
                 ),
@@ -63,7 +66,7 @@ class VenueSection extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: _openMaps,
                   icon: const Icon(Icons.map_outlined, size: 18),
-                  label: const Text('VIEW ON GOOGLE MAPS'),
+                  label: Text(l10n.viewOnMaps),
                 ),
               ],
             ),

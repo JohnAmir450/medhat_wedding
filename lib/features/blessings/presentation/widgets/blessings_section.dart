@@ -3,9 +3,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+import '../../../../core/localization/extensions.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../presentation/widgets/common/section_wrapper.dart';
+import '../../../../presentation/widgets/success_toast.dart';
 import '../../cubit/blessings_cubit.dart';
 import '../../cubit/blessings_state.dart';
 import '../../data/models/blessing_model.dart';
@@ -26,17 +28,19 @@ class _BlessingsSectionState extends State<BlessingsSection> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return SectionWrapper(
       backgroundColor: AppColors.emerald.withOpacity(0.2),
       child: Column(
         children: [
-          const SectionTitle(
-            eyebrow: 'GUESTBOOK',
-            title: 'Blessings & Wishes',
+          SectionTitle(
+            eyebrow: l10n.guestbook,
+            title: l10n.blessingsTitle,
           ),
           const SizedBox(height: 12),
           Text(
-            "Leave a message of love for the happy couple",
+            l10n.blessingsSubtitle,
             textAlign: TextAlign.center,
             style: AppTextStyles.body(size: 15),
           ),
@@ -83,6 +87,8 @@ class _BlessingFormState extends State<_BlessingForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isArabic = l10n.isArabic;
     final isMobile = Responsive.isMobile(context);
 
     return BlocConsumer<BlessingsCubit, BlessingsState>(
@@ -91,16 +97,8 @@ class _BlessingFormState extends State<_BlessingForm> {
         if (state.submissionStatus == SubmissionStatus.success) {
           _messageController.clear();
           _nameController.clear();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-              content: Text(
-                'Thank you for your blessing! 💛',
-                style: AppTextStyles.body(color: AppColors.deepNavy),
-              ),
-            ),
-          );
+          // Show premium custom toast instead of default SnackBar
+          SuccessToast.show(context);
         } else if (state.submissionStatus == SubmissionStatus.error &&
             state.submissionError != null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -130,10 +128,13 @@ class _BlessingFormState extends State<_BlessingForm> {
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: isArabic
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
                 // Anonymous toggle
                 Row(
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                   children: [
                     Switch(
                       value: _isAnonymous,
@@ -143,37 +144,48 @@ class _BlessingFormState extends State<_BlessingForm> {
                           : (v) => setState(() => _isAnonymous = v),
                     ),
                     const SizedBox(width: 8),
-                    Text('Post anonymously', style: AppTextStyles.body(size: 14)),
+                    Text(
+                      l10n.postAnonymously,
+                      style: AppTextStyles.body(size: 14),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                if (!_isAnonymous) ...[
+                if (!_isAnonymous)
                   TextFormField(
                     controller: _nameController,
                     enabled: !isSubmitting,
                     style: AppTextStyles.body(color: AppColors.ivory),
-                    decoration: const InputDecoration(hintText: 'Your name'),
+                    decoration: InputDecoration(
+                      hintText: l10n.yourNameHint,
+                      hintTextDirection: isArabic
+                          ? TextDirection.rtl
+                          : TextDirection.ltr,
+                    ),
+                    textAlign: isArabic ? TextAlign.right : TextAlign.left,
                     validator: (value) {
-                      if (_isAnonymous) return null;
                       if (value == null || value.trim().isEmpty) {
-                        return 'Please enter your name';
+                        return l10n.nameRequired;
                       }
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
-                ],
+                if (!_isAnonymous) const SizedBox(height: 16),
                 TextFormField(
                   controller: _messageController,
                   enabled: !isSubmitting,
                   maxLines: 4,
                   style: AppTextStyles.body(color: AppColors.ivory),
-                  decoration: const InputDecoration(
-                    hintText: 'Write your blessing or congratulations...',
+                  decoration: InputDecoration(
+                    hintText: l10n.blessingHint,
+                    hintTextDirection: isArabic
+                        ? TextDirection.rtl
+                        : TextDirection.ltr,
                   ),
+                  textAlign: isArabic ? TextAlign.right : TextAlign.left,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please write a message';
+                      return l10n.messageRequired;
                     }
                     return null;
                   },
@@ -192,7 +204,7 @@ class _BlessingFormState extends State<_BlessingForm> {
                               color: AppColors.deepNavy,
                             ),
                           )
-                        : const Text('SEND BLESSING'),
+                        : Text(l10n.sendBlessing),
                   ),
                 ),
               ],
@@ -211,20 +223,31 @@ class _BlessingsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return BlocBuilder<BlessingsCubit, BlessingsState>(
       builder: (context, state) {
         switch (state.status) {
           case BlessingsStatus.initial:
           case BlessingsStatus.loading:
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
-              child: CircularProgressIndicator(color: AppColors.gold),
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Column(
+                children: [
+                  const CircularProgressIndicator(color: AppColors.gold),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.loadingBlessings,
+                    style: AppTextStyles.body(size: 14),
+                  ),
+                ],
+              ),
             );
           case BlessingsStatus.error:
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
-                state.errorMessage ?? 'Something went wrong.',
+                l10n.blessingsError,
                 style: AppTextStyles.body(color: AppColors.error),
               ),
             );
@@ -233,7 +256,7 @@ class _BlessingsList extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(
-                  'Be the first to leave a blessing!',
+                  l10n.beFirstBlessing,
                   style: AppTextStyles.body(),
                 ),
               );
@@ -241,7 +264,7 @@ class _BlessingsList extends StatelessWidget {
             return Column(
               children: [
                 Text(
-                  '${state.totalBlessings} blessing${state.totalBlessings == 1 ? '' : 's'} and counting',
+                  l10n.blessingsCount(state.totalBlessings),
                   style: AppTextStyles.label(size: 12),
                 ),
                 const SizedBox(height: 24),
@@ -298,6 +321,9 @@ class _BlessingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isArabic = l10n.isArabic;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -306,20 +332,25 @@ class _BlessingCard extends StatelessWidget {
         border: Border.all(color: AppColors.gold.withOpacity(0.25)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: isArabic
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
-          Icon(Icons.format_quote, color: AppColors.gold.withOpacity(0.6), size: 20),
+          Icon(Icons.format_quote,
+              color: AppColors.gold.withOpacity(0.6), size: 20),
           const SizedBox(height: 6),
           Expanded(
             child: Text(
               blessing.message,
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
+              textAlign: isArabic ? TextAlign.right : TextAlign.left,
               style: AppTextStyles.body(size: 14, color: AppColors.ivory),
             ),
           ),
           const SizedBox(height: 10),
           Row(
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
             children: [
               CircleAvatar(
                 radius: 12,
@@ -335,12 +366,18 @@ class _BlessingCard extends StatelessWidget {
                 child: Text(
                   blessing.name,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.label(size: 12, color: AppColors.goldLight),
+                  textAlign: isArabic ? TextAlign.right : TextAlign.left,
+                  style: AppTextStyles.label(
+                    size: 12,
+                    color: AppColors.goldLight,
+                  ),
                 ),
               ),
               Text(
-                timeago.format(blessing.createdAt),
-                style: AppTextStyles.body(size: 11, color: AppColors.textMuted),
+                timeago.format(blessing.createdAt,
+                    locale: isArabic ? 'ar' : 'en'),
+                style:
+                    AppTextStyles.body(size: 11, color: AppColors.textMuted),
               ),
             ],
           ),
