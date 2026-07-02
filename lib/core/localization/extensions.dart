@@ -14,4 +14,5 @@ extension AppLocalizationsX on BuildContext {
     final locale = LocaleCubit.of(this).state;
     return AppLocalizations(locale.languageCode);
   }
+
 }
