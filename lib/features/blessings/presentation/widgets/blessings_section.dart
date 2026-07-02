@@ -3,11 +3,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-import '../../../../core/localization/extensions.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../presentation/widgets/common/section_wrapper.dart';
-import '../../../../presentation/widgets/success_toast.dart';
 import '../../cubit/blessings_cubit.dart';
 import '../../cubit/blessings_state.dart';
 import '../../data/models/blessing_model.dart';
@@ -28,19 +28,18 @@ class _BlessingsSectionState extends State<BlessingsSection> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-
+    final l10n = AppLocalizations.of(context);
     return SectionWrapper(
       backgroundColor: AppColors.emerald.withOpacity(0.2),
       child: Column(
         children: [
           SectionTitle(
-            eyebrow: l10n.guestbook,
-            title: l10n.blessingsTitle,
+            eyebrow: l10n.t('guestbook_eyebrow'),
+            title: l10n.t('guestbook_title'),
           ),
           const SizedBox(height: 12),
           Text(
-            l10n.blessingsSubtitle,
+            l10n.t('guestbook_subtitle'),
             textAlign: TextAlign.center,
             style: AppTextStyles.body(size: 15),
           ),
@@ -85,11 +84,27 @@ class _BlessingFormState extends State<_BlessingForm> {
         );
   }
 
+  /// Shows a premium custom toast (couple photo + a warm thank-you message
+  /// in the active language) instead of a plain default SnackBar.
+  void _showThankYouToast(BuildContext context, AppLocalizations l10n) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        padding: EdgeInsets.zero,
+        content: _ThankYouToast(l10n: l10n),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final isArabic = l10n.isArabic;
     final isMobile = Responsive.isMobile(context);
+    final l10n = AppLocalizations.of(context);
 
     return BlocConsumer<BlessingsCubit, BlessingsState>(
       listenWhen: (prev, curr) => prev.submissionStatus != curr.submissionStatus,
@@ -97,8 +112,8 @@ class _BlessingFormState extends State<_BlessingForm> {
         if (state.submissionStatus == SubmissionStatus.success) {
           _messageController.clear();
           _nameController.clear();
-          // Show premium custom toast instead of default SnackBar
-          SuccessToast.show(context);
+          setState(() => _isAnonymous = false);
+          _showThankYouToast(context, l10n);
         } else if (state.submissionStatus == SubmissionStatus.error &&
             state.submissionError != null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -128,13 +143,10 @@ class _BlessingFormState extends State<_BlessingForm> {
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: isArabic
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Anonymous toggle
                 Row(
-                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                   children: [
                     Switch(
                       value: _isAnonymous,
@@ -144,48 +156,37 @@ class _BlessingFormState extends State<_BlessingForm> {
                           : (v) => setState(() => _isAnonymous = v),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      l10n.postAnonymously,
-                      style: AppTextStyles.body(size: 14),
-                    ),
+                    Text(l10n.t('post_anonymously'), style: AppTextStyles.body(size: 14)),
                   ],
                 ),
                 const SizedBox(height: 16),
-                if (!_isAnonymous)
+                if (!_isAnonymous) ...[
                   TextFormField(
                     controller: _nameController,
                     enabled: !isSubmitting,
                     style: AppTextStyles.body(color: AppColors.ivory),
-                    decoration: InputDecoration(
-                      hintText: l10n.yourNameHint,
-                      hintTextDirection: isArabic
-                          ? TextDirection.rtl
-                          : TextDirection.ltr,
-                    ),
-                    textAlign: isArabic ? TextAlign.right : TextAlign.left,
+                    decoration: InputDecoration(hintText: l10n.t('your_name_hint')),
                     validator: (value) {
+                      if (_isAnonymous) return null;
                       if (value == null || value.trim().isEmpty) {
-                        return l10n.nameRequired;
+                        return l10n.t('name_validation');
                       }
                       return null;
                     },
                   ),
-                if (!_isAnonymous) const SizedBox(height: 16),
+                  const SizedBox(height: 16),
+                ],
                 TextFormField(
                   controller: _messageController,
                   enabled: !isSubmitting,
                   maxLines: 4,
                   style: AppTextStyles.body(color: AppColors.ivory),
                   decoration: InputDecoration(
-                    hintText: l10n.blessingHint,
-                    hintTextDirection: isArabic
-                        ? TextDirection.rtl
-                        : TextDirection.ltr,
+                    hintText: l10n.t('message_hint'),
                   ),
-                  textAlign: isArabic ? TextAlign.right : TextAlign.left,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return l10n.messageRequired;
+                      return l10n.t('message_validation');
                     }
                     return null;
                   },
@@ -204,7 +205,7 @@ class _BlessingFormState extends State<_BlessingForm> {
                               color: AppColors.deepNavy,
                             ),
                           )
-                        : Text(l10n.sendBlessing),
+                        : Text(l10n.t('send_blessing')),
                   ),
                 ),
               ],
@@ -216,6 +217,70 @@ class _BlessingFormState extends State<_BlessingForm> {
   }
 }
 
+/// Custom "thank you" toast content: the couple's circular photo next to
+/// a localized, warmly-worded message. Rendered inside a transparent,
+/// floating SnackBar so it looks like a bespoke pop-up rather than a
+/// default system toast.
+class _ThankYouToast extends StatelessWidget {
+  const _ThankYouToast({required this.l10n});
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.deepNavy,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.gold.withOpacity(0.6)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.gold.withOpacity(0.2),
+            blurRadius: 24,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      // Row automatically mirrors for RTL locales via the ambient
+      // Directionality, so no manual reordering is needed here.
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.gold, width: 1.2),
+            ),
+            child: ClipOval(
+              child: SizedBox(
+                width: 52,
+                height: 52,
+                child: Image.asset(
+                  AppConstants.coupleImagePath,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppColors.emerald,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.favorite, color: AppColors.gold, size: 22),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              l10n.t('thank_you_message'),
+              style: AppTextStyles.body(size: 13.5, color: AppColors.ivory, height: 1.5),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.15, end: 0);
+  }
+}
+
 /// ----------------------- LIST -----------------------
 
 class _BlessingsList extends StatelessWidget {
@@ -223,31 +288,21 @@ class _BlessingsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-
+    final l10n = AppLocalizations.of(context);
     return BlocBuilder<BlessingsCubit, BlessingsState>(
       builder: (context, state) {
         switch (state.status) {
           case BlessingsStatus.initial:
           case BlessingsStatus.loading:
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Column(
-                children: [
-                  const CircularProgressIndicator(color: AppColors.gold),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.loadingBlessings,
-                    style: AppTextStyles.body(size: 14),
-                  ),
-                ],
-              ),
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: CircularProgressIndicator(color: AppColors.gold),
             );
           case BlessingsStatus.error:
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
-                l10n.blessingsError,
+                state.errorMessage ?? l10n.t('load_error'),
                 style: AppTextStyles.body(color: AppColors.error),
               ),
             );
@@ -256,17 +311,18 @@ class _BlessingsList extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(
-                  l10n.beFirstBlessing,
+                  l10n.t('empty_blessings'),
                   style: AppTextStyles.body(),
                 ),
               );
             }
+            final count = state.totalBlessings;
+            final countLabel = l10n.isArabic
+                ? '$count ${count == 1 ? l10n.t('blessings_count_one') : l10n.t('blessings_count_many')}'
+                : '$count ${count == 1 ? l10n.t('blessings_count_one') : l10n.t('blessings_count_many')}';
             return Column(
               children: [
-                Text(
-                  l10n.blessingsCount(state.totalBlessings),
-                  style: AppTextStyles.label(size: 12),
-                ),
+                Text(countLabel, style: AppTextStyles.label(size: 12)),
                 const SizedBox(height: 24),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 560),
@@ -321,8 +377,8 @@ class _BlessingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final isArabic = l10n.isArabic;
+    final l10n = AppLocalizations.of(context);
+    final displayName = blessing.isAnonymous ? l10n.t('anonymous_label') : blessing.name;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -332,25 +388,20 @@ class _BlessingCard extends StatelessWidget {
         border: Border.all(color: AppColors.gold.withOpacity(0.25)),
       ),
       child: Column(
-        crossAxisAlignment: isArabic
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.format_quote,
-              color: AppColors.gold.withOpacity(0.6), size: 20),
+          Icon(Icons.format_quote, color: AppColors.gold.withOpacity(0.6), size: 20),
           const SizedBox(height: 6),
           Expanded(
             child: Text(
               blessing.message,
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
-              textAlign: isArabic ? TextAlign.right : TextAlign.left,
               style: AppTextStyles.body(size: 14, color: AppColors.ivory),
             ),
           ),
           const SizedBox(height: 10),
           Row(
-            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
             children: [
               CircleAvatar(
                 radius: 12,
@@ -364,20 +415,14 @@ class _BlessingCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  blessing.name,
+                  displayName,
                   overflow: TextOverflow.ellipsis,
-                  textAlign: isArabic ? TextAlign.right : TextAlign.left,
-                  style: AppTextStyles.label(
-                    size: 12,
-                    color: AppColors.goldLight,
-                  ),
+                  style: AppTextStyles.label(size: 12, color: AppColors.goldLight),
                 ),
               ),
               Text(
-                timeago.format(blessing.createdAt,
-                    locale: isArabic ? 'ar' : 'en'),
-                style:
-                    AppTextStyles.body(size: 11, color: AppColors.textMuted),
+                timeago.format(blessing.createdAt, locale: l10n.isArabic ? 'ar' : 'en'),
+                style: AppTextStyles.body(size: 11, color: AppColors.textMuted),
               ),
             ],
           ),

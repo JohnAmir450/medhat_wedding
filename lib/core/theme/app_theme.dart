@@ -57,7 +57,7 @@ class AppTextStyles {
       );
 
   /// Small caps / label / eyebrow text.
-  static TextStyle label({double size = 13, Color? color}) => GoogleFonts.lato(
+  static TextStyle label({double size = 13, Color? color}) => GoogleFonts.cairo(
         fontSize: size,
         fontWeight: FontWeight.w600,
         color: color ?? AppColors.gold,

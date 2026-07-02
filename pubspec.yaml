@@ -25,6 +25,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   flutter_animate: ^4.5.0
   google_maps_flutter: ^2.7.0
+  visibility_detector: ^0.4.0+2
 
   # Utils
   intl: ^0.20.2
@@ -43,9 +44,6 @@ flutter:
 
   assets:
     - assets/images/
-    # Uncomment when you add a splash GIF:
-    # - assets/gifs/
-
   # Optional: bundle fonts locally instead of using google_fonts network fetch
   # fonts:
   #   - family: PlayfairDisplay
@@ -54,3 +52,5 @@ flutter:
   #   - family: GreatVibes
   #     fonts:
   #       - asset: assets/fonts/GreatVibes-Regular.ttf
+flutter_intl:
+  enabled: true

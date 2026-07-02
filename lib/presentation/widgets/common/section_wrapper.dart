@@ -87,7 +87,7 @@ class SectionTitle extends StatelessWidget {
         const SizedBox(height: 14),
         Text(
           title,
-          textAlign: center ? TextAlign.center : TextAlign.left,
+          textAlign: center ? TextAlign.center : TextAlign.start,
           style: AppTextStyles.heading(size: 34),
         ),
         const SizedBox(height: 16),

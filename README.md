@@ -1,29 +1,34 @@
-# 💍 Digital Wedding Invitation — Flutter Web
+# 💍 Digital Wedding Invitation — Medhat & Nesma
 
-A premium, minimalist, luxury-styled single-page wedding invitation built with
-Flutter Web, `flutter_bloc`, and Firebase Firestore.
+A premium, minimalist, luxury-styled single-page wedding invitation built
+with Flutter Web, `flutter_bloc`, and Firebase Firestore — fully bilingual
+(Arabic default / English) with a splash intro and scroll-triggered
+animations.
 
 ## ✨ Palette & Type
 
 - **Colors:** Deep Navy (`#0B2A25`), Emerald (`#16433B`), Gold (`#C9A66B`) —
-  defined once in `lib/core/theme/app_theme.dart` (`AppColors`). Swap these
-  four hex values to switch to a Champagne & Rose Gold theme; nothing else
-  needs to change.
+  defined once in `lib/core/theme/app_theme.dart` (`AppColors`).
 - **Type:** `Great Vibes` (script, names/hero) + `Playfair Display`
-  (headings) + `Lato` (body/UI), all loaded via `google_fonts` — no manual
-  font bundling required.
+  (headings) + `Lato` (body/UI), all loaded via `google_fonts`.
 
 ## 📁 Project Structure (Feature-First / Clean Architecture)
 
 ```
 lib/
-├── main.dart                          # Firebase init + MaterialApp
+├── main.dart                              # Firebase + locale + splash wiring
 ├── core/
-│   ├── constants/app_constants.dart   # Couple names, date, venue, hashtag
-│   ├── theme/app_theme.dart           # Colors, text styles, ThemeData
-│   └── utils/responsive.dart          # Breakpoint helpers
+│   ├── constants/app_constants.dart       # Names, date, venue, links
+│   ├── localization/
+│   │   ├── app_language.dart              # AppLanguage enum (ar/en)
+│   │   ├── locale_cubit.dart              # Cubit<AppLanguage>, ar by default
+│   │   └── app_strings.dart               # All bilingual UI copy
+│   ├── theme/app_theme.dart               # Colors, text styles, ThemeData
+│   └── utils/
+│       ├── responsive.dart                # Breakpoint helpers
+│       └── date_formatter.dart            # Bilingual date/time formatting
 ├── features/
-│   └── blessings/                     # Guestbook feature
+│   └── blessings/                         # Guestbook feature
 │       ├── data/
 │       │   ├── models/blessing_model.dart
 │       │   └── services/firebase_service.dart
@@ -32,17 +37,18 @@ lib/
 │       │   └── blessings_state.dart
 │       └── presentation/widgets/blessings_section.dart
 └── presentation/
-    ├── pages/wedding_home_page.dart   # Assembles all sections
+    ├── pages/
+    │   ├── splash_screen.dart             # Welcome screen w/ Skip button
+    │   └── wedding_home_page.dart         # Assembles all sections
     └── widgets/
         ├── hero_section.dart
         ├── countdown_section.dart
         ├── venue_section.dart
-        └── common/section_wrapper.dart
+        └── common/
+            ├── section_wrapper.dart
+            ├── scroll_fade_in.dart        # Scroll-triggered reveal wrapper
+            └── language_toggle_button.dart
 ```
-
-Each layer only depends on the one below it (presentation → cubit → data),
-so the guestbook's Firestore logic can be swapped for another backend by
-rewriting only `firebase_service.dart`.
 
 ## 🚀 Getting Started
 
@@ -56,50 +62,102 @@ rewriting only `firebase_service.dart`.
    dart pub global activate flutterfire_cli
    flutterfire configure
    ```
-   This generates `lib/firebase_options.dart`. Then in `main.dart`:
-   - uncomment `import 'firebase_options.dart';`
-   - replace the manual `FirebaseOptions(...)` block with
-     `options: DefaultFirebaseOptions.currentPlatform`.
+   Generates `lib/firebase_options.dart`. Then in `main.dart`: uncomment
+   `import 'firebase_options.dart';` and replace the manual
+   `FirebaseOptions(...)` block with `options: DefaultFirebaseOptions.currentPlatform`.
 
-3. **Create the Firestore collection**
-   The app reads/writes `blessings` (see `AppConstants.blessingsCollection`).
-   No manual setup needed — the first submission creates it automatically.
-   Deploy the included rules:
+3. **Firestore collection & rules**
+   The app reads/writes `blessings` (`AppConstants.blessingsCollection`) —
+   created automatically on first submission. Deploy the included rules:
    ```bash
    firebase deploy --only firestore:rules
    ```
 
 4. **Personalize content**
-   Edit `lib/core/constants/app_constants.dart`: names, date/time, venue,
-   address, coordinates, and photo URLs.
+   - Names, wedding date/time, venue, Google Maps link →
+     `lib/core/constants/app_constants.dart`
+   - All bilingual copy (labels, hints, toast message, etc.) →
+     `lib/core/localization/app_strings.dart`
 
 5. **Run**
    ```bash
    flutter run -d chrome
    ```
 
-## 🧩 Key Design Decisions
+## 🌍 Localization (Arabic default / English)
 
-- **Cubit over full Bloc** for the guestbook: the interactions are simple
-  (subscribe to a stream, submit a form) so `Cubit` keeps the code lean
-  while `flutter_bloc`'s `BlocBuilder` / `BlocConsumer` still give clean
-  separation between state and UI.
+- `AppLanguage` (`core/localization/app_language.dart`) is the two-value
+  enum; `LocaleCubit` holds the current selection and **starts on
+  `AppLanguage.ar`**, satisfying "Arabic as default on load."
+- `AppLocalizations` (`core/localization/app_strings.dart`) is a plain
+  Dart class (no code-gen / `.arb` files) exposing `context.tr('key')` /
+  `AppLocalizations.of(context).t('key')`. Every static string, form hint,
+  validator message, button label, and the guestbook toast is looked up
+  through it — nothing is hardcoded per-language in the widgets.
+- `MaterialApp` in `main.dart` wires up `flutter_localizations`
+  (`GlobalMaterialLocalizations`, `GlobalWidgetsLocalizations`,
+  `GlobalCupertinoLocalizations`) and passes `locale: language.locale`.
+  Flutter automatically derives the app-wide `Directionality` from that
+  locale, so **Arabic renders fully right-to-left** with zero manual RTL
+  widgets required elsewhere.
+- Dates/times are formatted per-language by `core/utils/date_formatter.dart`
+  without needing `intl`'s async locale-data initialization (which is easy
+  to forget on Flutter Web) — it derives weekday/month names from the
+  `DateTime` directly, so changing the wedding date automatically updates
+  both languages correctly.
+- Tap the gold pill button (top-right of the hero) to toggle languages at
+  any time — see `LanguageToggleButton`.
+
+## 📅 Wedding Details (edit in `app_constants.dart`)
+
+| Field | Value |
+|---|---|
+| Date & time | September 5, 2026, 6:00 PM |
+| Venue (EN) | Evangelical Church in Abu Qurqas al-Balad |
+| Venue (AR) | الكنيسة الإنجيلية بأبو قرقاص البلد |
+| Maps link | https://maps.app.goo.gl/PApVrYTyzeSyR5un9 |
+
+## 🧩 Key Design Decisions & Fixes
+
+- **Cubit over full Bloc** for both the guestbook and locale state — the
+  interactions are simple enough that `Cubit` keeps the code lean while
+  `BlocBuilder`/`BlocConsumer` still give clean state/UI separation.
 - **Two independent status enums** (`BlessingsStatus` for the live list,
   `SubmissionStatus` for the form) so submitting a new blessing never
   interrupts or reloads the existing list.
-- **`SectionWrapper` + `SectionTitle`** centralize spacing/typography rules
-  so every section (`Hero`, `Countdown`, `Venue`, `Blessings`) stays visually
-  consistent without repeating layout code.
-- **Responsive layout** via `Responsive` helpers — hero switches from a
-  side-by-side desktop layout to a stacked mobile layout, and the blessings
-  grid adapts from 3 columns → 2 → 1.
-- **`flutter_animate`** powers the subtle fade/slide entry animations
-  throughout (hero text, countdown digits, blessing cards).
+- **Circular photo fix:** the hero photo previously could turn oval when
+  its flexible parent (`Expanded`) got narrower than the intended size on
+  window resize. It's now wrapped in `AspectRatio(aspectRatio: 1)` inside a
+  `ConstrainedBox`, guaranteeing a true 1:1 square *before* `ClipOval`
+  clips it — so it stays a perfect circle at every viewport width. See
+  `_CouplePhoto` in `hero_section.dart`.
+- **Custom "thank you" toast:** submitting a blessing shows a bespoke
+  floating card (`_ThankYouToast` in `blessings_section.dart`) — the
+  couple's circular photo next to the localized message — instead of a
+  default `SnackBar` look, by rendering the card as the SnackBar's
+  `content` with a transparent background/no elevation.
+- **Splash / welcome screen:** `splash_screen.dart` plays an intro (drop
+  your own `assets/images/splash.gif` to use a real animated intro — it's
+  picked up automatically) with a minimal "Skip" button in the
+  language-aware corner. `RootScreen` in `main.dart` cross-fades into the
+  main page via `AnimatedSwitcher` once the timer elapses or the person
+  taps Skip. Tune the auto-advance duration via
+  `AppConstants.splashAutoAdvance` to match your GIF's real length.
+- **Scroll reveal animations:** `ScrollFadeIn` (using the
+  `visibility_detector` package) fades + slides each section up the first
+  time it scrolls into view, replacing the previously static scroll feel.
+  Wrapped around Countdown, Venue, and Blessings in `wedding_home_page.dart`.
+- **RTL correctness:** hardcoded `TextAlign.left` was replaced with
+  `TextAlign.start` throughout so text alignment mirrors correctly in
+  Arabic; `Row`s (e.g. the thank-you toast) rely on Flutter's automatic
+  RTL mirroring rather than manual child reordering.
 
 ## 📦 Notes
 
-- Replace `AppConstants.heroImageUrl` / `coupleImageUrl` with your own
-  hosted photos (or bundle them as assets and update `pubspec.yaml`).
-- `google_maps_flutter` is included in `pubspec.yaml` for an optional
-  embedded map upgrade to the Venue section; the current implementation
-  keeps it simple with a "View on Google Maps" deep link via `url_launcher`.
+- **Splash GIF:** no animated GIF asset is bundled by default (none was
+  provided). Add yours at `assets/images/splash.gif` — it's already
+  registered under `assets:` in `pubspec.yaml` via the `assets/images/`
+  folder glob, so no further pubspec changes are needed. Until you add
+  one, a tasteful animated gold-ring-and-heart monogram is shown instead.
+- The couple's photo (`assets/images/couple.png`) is used both in the hero
+  circle and the thank-you toast.

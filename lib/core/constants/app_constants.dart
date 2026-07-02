@@ -4,32 +4,35 @@
 class AppConstants {
   AppConstants._();
 
-  // Couple
-  static const String groomName = 'Medhat';
-  static const String brideName = 'Nesma';
+  // Couple — kept in both scripts so the UI can switch with the language.
+  static const String groomNameEn = 'Medhat';
+  static const String brideNameEn = 'Nesma';
+  static const String groomNameAr = 'مدحت';
+  static const String brideNameAr = 'نسمة';
   static const String coupleHashtag = '#MedhatAndNesma';
 
   // Date & Time — used by the countdown timer and hero section.
+  // 5th September 2026, 6:00 PM.
   static final DateTime weddingDateTime = DateTime(2026, 9, 5, 18, 0);
-  static const String weddingDateLabel = 'Saturday, 5th September 2026';
-  static const String weddingTimeLabel = '6:00 PM — Onwards';
 
   // Venue
-  static const String venueName = 'Evangelical Church in Abu Qurqas al-Balad';
+  static const String venueNameEn = 'Evangelical Church in Abu Qurqas al-Balad';
   static const String venueNameAr = 'الكنيسة الإنجيلية بأبو قرقاص البلد';
-  static const String venueAddress = '';
-  static const double venueLat = 27.93;
-  static const double venueLng = 30.84;
-  static const String googleMapsUrl =
-      'https://maps.app.goo.gl/PApVrYTyzeSyR5un9';
+  static const String googleMapsUrl = 'https://maps.app.goo.gl/PApVrYTyzeSyR5un9';
 
   // Firestore
   static const String blessingsCollection = 'blessings';
 
-  // Couple photo — bundled locally as an asset.
+  // Couple photo — bundled locally as an asset (see pubspec.yaml `assets:`).
+  // Using a local asset avoids the CORS / hotlink restrictions that Google
+  // Drive "preview" links run into on Flutter Web (Image.network would
+  // often fail to load them). If you'd rather serve it remotely, upload
+  // the photo to Firebase Storage or any CDN and set [coupleImageUrl]
+  // below — the hero section and the blessing snackbar both fall back to
+  // it if the asset is missing.
   static const String coupleImagePath = 'assets/images/couple.png';
   static const String? coupleImageUrl = null;
 
-  // Splash screen GIF — replace with your own GIF file at assets/gifs/splash.gif
-  static const String splashGifPath = 'assets/gifs/splash.gif';
+  // Splash / welcome screen
+  static const Duration splashAutoAdvance = Duration(seconds: 4);
 }
