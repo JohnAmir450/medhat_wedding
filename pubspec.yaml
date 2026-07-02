@@ -1,0 +1,52 @@
+name: wedding_invitation
+description: "A luxury digital wedding invitation built with Flutter Web."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_bloc: ^8.1.5
+  equatable: ^2.0.5
+
+  # Firebase
+  firebase_core: ^2.32.0
+  cloud_firestore: ^4.17.5
+
+  # UI / Fonts / Icons
+  google_fonts: ^6.2.1
+  cupertino_icons: ^1.0.6
+  flutter_animate: ^4.5.0
+  google_maps_flutter: ^2.7.0
+
+  # Utils
+  intl: ^0.19.0
+  url_launcher: ^6.3.0
+  responsive_framework: ^1.4.0
+  uuid: ^4.4.0
+  timeago: ^3.6.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+
+  # Optional: bundle fonts locally instead of using google_fonts network fetch
+  # fonts:
+  #   - family: PlayfairDisplay
+  #     fonts:
+  #       - asset: assets/fonts/PlayfairDisplay-Regular.ttf
+  #   - family: GreatVibes
+  #     fonts:
+  #       - asset: assets/fonts/GreatVibes-Regular.ttf

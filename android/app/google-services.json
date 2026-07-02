@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "560526628443",
+    "project_id": "medhat-wedding",
+    "storage_bucket": "medhat-wedding.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:560526628443:android:4dee05d42ed73705ab917e",
+        "android_client_info": {
+          "package_name": "com.example.medhat_wedding"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvikuLs8vXFXxnSEn2mPkjaq1eP6EGY6w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

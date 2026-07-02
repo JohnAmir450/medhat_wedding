@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /blessings/{blessingId} {
+      // Anyone can read the guestbook.
+      allow read: if true;
+
+      // Anyone can create a blessing, but only with well-formed data —
+      // no editing or deleting other guests' messages.
+      allow create: if request.resource.data.message is string
+                    && request.resource.data.message.size() > 0
+                    && request.resource.data.message.size() <= 500
+                    && request.resource.data.name is string
+                    && request.resource.data.isAnonymous is bool;
+
+      allow update, delete: if false;
+    }
+  }
+}
