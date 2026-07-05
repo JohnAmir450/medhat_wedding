@@ -49,7 +49,7 @@ class OrnamentDivider extends StatelessWidget {
       children: [
         _line(),
         const SizedBox(width: 10),
-        const Icon(Icons.diamond_outlined, size: 12, color: AppColors.gold),
+        Icon(Icons.diamond_outlined, size: 12, color: AppColors.gold),
         const SizedBox(width: 10),
         _line(),
       ],

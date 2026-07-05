@@ -1,3 +1,5 @@
+import 'dart:html' as html;
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,11 +31,26 @@ Future<void> main() async {
     
   );
 
+  final musicCubit = MusicCubit();
+
+  // Web-only, and deliberately registered as a *raw DOM* listener rather
+  // than a Flutter `Listener`/`GestureDetector`. On mobile browsers
+  // (iOS Safari especially) Flutter's own pointer-event pipeline can add
+  // just enough indirection that the browser no longer treats the
+  // resulting call as "inside a trusted user gesture," so autoplay stays
+  // blocked even though the exact same code works fine on desktop mouse
+  // clicks. Listening directly on `document` for the browser's native
+  // `click`/`touchend` events avoids that gap entirely. This complements
+  // (rather than replaces) the Flutter-level `Listener` in [RootScreen]
+  // below, so playback unlocks reliably on both desktop and mobile.
+  html.document.addEventListener('click', (_) => musicCubit.unlockWithUserGesture());
+  html.document.addEventListener('touchend', (_) => musicCubit.unlockWithUserGesture());
+
   runApp(
     MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => LocaleCubit()),
-        BlocProvider(create: (_) => MusicCubit()),
+        BlocProvider.value(value: musicCubit),
       ],
       child: const WeddingInvitationApp(),
     ),
@@ -70,10 +87,10 @@ class WeddingInvitationApp extends StatelessWidget {
 }
 
 /// Hosts the splash/welcome screen and cross-fades into the main
-/// invitation once it finishes (or the user taps "Skip"). Also owns the
-/// "first tap anywhere unlocks audio" gesture listener and the always-on
-/// floating music toggle button, so both work identically whether the
-/// guest is still on the splash screen or already on the main page.
+/// invitation once it finishes (or the user taps "Skip"). Also owns a
+/// Flutter-level "first tap anywhere unlocks audio" gesture listener
+/// (complementing the raw DOM listener registered in `main()`) and the
+/// always-on floating music toggle button.
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
 
@@ -92,12 +109,11 @@ class _RootScreenState extends State<RootScreen> {
   @override
   Widget build(BuildContext context) {
     return Listener(
-      // Browsers block audio-with-sound until the page gets a genuine
-      // user gesture. This fires on the very first tap/click ANYWHERE on
-      // the page (including the Skip button, a form field, etc.) and
-      // asks MusicCubit to start playback if it hasn't already.
       behavior: HitTestBehavior.translucent,
-      onPointerDown: (_) => context.read<MusicCubit>().unlockWithUserGesture(),
+      // `onPointerUp` (closer to a browser "click"/"touchend") rather
+      // than `onPointerDown` — mobile Safari in particular is fussy
+      // about which gesture phase counts toward its autoplay allowance.
+      onPointerUp: (_) => context.read<MusicCubit>().unlockWithUserGesture(),
       child: Stack(
         children: [
           AnimatedSwitcher(

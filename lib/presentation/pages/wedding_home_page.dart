@@ -24,16 +24,16 @@ class WeddingHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => BlessingsCubit(),
-      child: const Scaffold(
+      child: Scaffold(
         backgroundColor: AppColors.deepNavy,
         body: SingleChildScrollView(
           child: Column(
             children: [
-              HeroSection(),
-              ScrollFadeIn(id: 'countdown', child: CountdownSection()),
-              ScrollFadeIn(id: 'venue', child: VenueSection()),
-              ScrollFadeIn(id: 'blessings', child: BlessingsSection()),
-              _Footer(),
+              const HeroSection(),
+              const ScrollFadeIn(id: 'countdown', child: CountdownSection()),
+              const ScrollFadeIn(id: 'venue', child: VenueSection()),
+              const ScrollFadeIn(id: 'blessings', child: BlessingsSection()),
+              const _Footer(),
             ],
           ),
         ),
