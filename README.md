@@ -152,6 +152,23 @@ lib/
   Arabic; `Row`s (e.g. the thank-you toast) rely on Flutter's automatic
   RTL mirroring rather than manual child reordering.
 
+## 🎵 Background Music
+
+- The track is bundled at `assets/audio/wedding-music.mp3` and played via
+  the `audioplayers` package (`lib/features/music/cubit/music_cubit.dart`),
+  looping at a comfortable volume (`AppConstants.backgroundMusicVolume`).
+- **Why it might not start instantly on web:** browsers block audio-with-
+  sound until the page receives a real user gesture (a security policy,
+  not a bug — Flutter can't override it). The app tries to autoplay on
+  load; if the browser blocks it, playback starts automatically on the
+  guest's very first tap/click anywhere on the page (wired in `RootScreen`
+  in `main.dart`), so in practice music starts the moment someone
+  interacts with the invitation.
+- A small floating gold button (bottom-right, always visible via
+  `MusicToggleButton`) lets guests mute/unmute manually at any time.
+- To swap the track: replace `assets/audio/wedding-music.mp3` (same
+  filename) or update `AppConstants.backgroundMusicAssetPath`.
+
 ## 📦 Notes
 
 - **Splash GIF:** no animated GIF asset is bundled by default (none was

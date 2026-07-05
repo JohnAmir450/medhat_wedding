@@ -4,9 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:wedding_invitation/firebase_options.dart';
+
 import 'core/localization/app_language.dart';
 import 'core/localization/locale_cubit.dart';
 import 'core/theme/app_theme.dart';
+import 'features/music/cubit/music_cubit.dart';
+import 'features/music/presentation/music_toggle_button.dart';
 import 'presentation/pages/splash_screen.dart';
 import 'presentation/pages/wedding_home_page.dart';
 
@@ -23,12 +26,15 @@ Future<void> main() async {
 
   await Firebase.initializeApp(
      options: DefaultFirebaseOptions.currentPlatform,
-   
+    
   );
 
   runApp(
-    BlocProvider(
-      create: (_) => LocaleCubit(),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => LocaleCubit()),
+        BlocProvider(create: (_) => MusicCubit()),
+      ],
       child: const WeddingInvitationApp(),
     ),
   );
@@ -64,7 +70,10 @@ class WeddingInvitationApp extends StatelessWidget {
 }
 
 /// Hosts the splash/welcome screen and cross-fades into the main
-/// invitation once it finishes (or the user taps "Skip").
+/// invitation once it finishes (or the user taps "Skip"). Also owns the
+/// "first tap anywhere unlocks audio" gesture listener and the always-on
+/// floating music toggle button, so both work identically whether the
+/// guest is still on the splash screen or already on the main page.
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
 
@@ -82,13 +91,30 @@ class _RootScreenState extends State<RootScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 700),
-      switchInCurve: Curves.easeOut,
-      switchOutCurve: Curves.easeIn,
-      child: _showSplash
-          ? SplashScreen(key: const ValueKey('splash'), onFinished: _finishSplash)
-          : const WeddingHomePage(key: ValueKey('home')),
+    return Listener(
+      // Browsers block audio-with-sound until the page gets a genuine
+      // user gesture. This fires on the very first tap/click ANYWHERE on
+      // the page (including the Skip button, a form field, etc.) and
+      // asks MusicCubit to start playback if it hasn't already.
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) => context.read<MusicCubit>().unlockWithUserGesture(),
+      child: Stack(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 700),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            child: _showSplash
+                ? SplashScreen(key: const ValueKey('splash'), onFinished: _finishSplash)
+                : const WeddingHomePage(key: ValueKey('home')),
+          ),
+          const Positioned(
+            bottom: 20,
+            right: 20,
+            child: SafeArea(child: MusicToggleButton()),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -13,7 +13,7 @@ class AppConstants {
 
   // Date & Time — used by the countdown timer and hero section.
   // 5th September 2026, 6:00 PM.
-  static final DateTime weddingDateTime = DateTime(2026, 9, 5, 18, 0);
+  static final DateTime weddingDateTime = DateTime(2026, 9, 5, 20, 0);
 
   // Venue
   static const String venueNameEn = 'Evangelical Church in Abu Qurqas al-Balad';
@@ -35,4 +35,10 @@ class AppConstants {
 
   // Splash / welcome screen
   static const Duration splashAutoAdvance = Duration(seconds: 4);
+
+  // Background music. Path is relative to the `assets/` folder — the
+  // `audioplayers` package's AssetSource prepends "assets/" itself, so do
+  // NOT include it here.
+  static const String backgroundMusicAssetPath = 'audio/wedding-music.mp3';
+  static const double backgroundMusicVolume = 0.45;
 }

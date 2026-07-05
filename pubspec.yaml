@@ -34,6 +34,9 @@ dependencies:
   uuid: ^4.4.0
   timeago: ^3.6.1
 
+  # Background music
+  audioplayers: ^6.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -44,6 +47,8 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/audio/
+
   # Optional: bundle fonts locally instead of using google_fonts network fetch
   # fonts:
   #   - family: PlayfairDisplay
@@ -52,5 +57,3 @@ flutter:
   #   - family: GreatVibes
   #     fonts:
   #       - asset: assets/fonts/GreatVibes-Regular.ttf
-flutter_intl:
-  enabled: true

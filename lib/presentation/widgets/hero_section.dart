@@ -65,12 +65,12 @@ class _HeroDesktopLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Expanded(flex: 5, child: Center(child: _CouplePhoto(size: 380))),
-        const SizedBox(width: 72),
-        const Expanded(flex: 6, child: _InvitationText(center: false)),
+        Expanded(flex: 5, child: Center(child: _CouplePhoto(size: 380))),
+        SizedBox(width: 72),
+        Expanded(flex: 6, child: _InvitationText(center: false)),
       ],
     );
   }
@@ -81,12 +81,12 @@ class _HeroMobileLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       children: [
-        const SizedBox(height: 8),
-        const _CouplePhoto(size: 240),
-        const SizedBox(height: 40),
-        const _InvitationText(center: true),
+        SizedBox(height: 8),
+        _CouplePhoto(size: 240),
+        SizedBox(height: 40),
+        _InvitationText(center: true),
       ],
     );
   }
@@ -133,7 +133,7 @@ class _CouplePhoto extends StatelessWidget {
                 AppConstants.coupleImagePath,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) {
-                  final remoteUrl = AppConstants.coupleImageUrl;
+                  const remoteUrl = AppConstants.coupleImageUrl;
                   if (remoteUrl != null) {
                     return Image.network(
                       remoteUrl,
