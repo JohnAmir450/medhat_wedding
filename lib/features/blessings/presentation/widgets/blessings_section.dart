@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -84,8 +87,6 @@ class _BlessingFormState extends State<_BlessingForm> {
         );
   }
 
-  /// Shows a premium custom toast (couple photo + a warm thank-you message
-  /// in the active language) instead of a plain default SnackBar.
   void _showThankYouToast(BuildContext context, AppLocalizations l10n) {
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
@@ -145,7 +146,6 @@ class _BlessingFormState extends State<_BlessingForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Anonymous toggle
                 Row(
                   children: [
                     Switch(
@@ -217,10 +217,6 @@ class _BlessingFormState extends State<_BlessingForm> {
   }
 }
 
-/// Custom "thank you" toast content: the couple's circular photo next to
-/// a localized, warmly-worded message. Rendered inside a transparent,
-/// floating SnackBar so it looks like a bespoke pop-up rather than a
-/// default system toast.
 class _ThankYouToast extends StatelessWidget {
   const _ThankYouToast({required this.l10n});
   final AppLocalizations l10n;
@@ -241,8 +237,6 @@ class _ThankYouToast extends StatelessWidget {
           ),
         ],
       ),
-      // Row automatically mirrors for RTL locales via the ambient
-      // Directionality, so no manual reordering is needed here.
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -281,7 +275,7 @@ class _ThankYouToast extends StatelessWidget {
   }
 }
 
-/// ----------------------- LIST -----------------------
+/// ----------------------- LIST (auto-scrolling marquee) -----------------------
 
 class _BlessingsList extends StatelessWidget {
   const _BlessingsList();
@@ -289,7 +283,16 @@ class _BlessingsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return BlocBuilder<BlessingsCubit, BlessingsState>(
+    final GlobalKey<_AutoScrollBlessingsRowState> scrollRowKey = GlobalKey();
+
+    return BlocConsumer<BlessingsCubit, BlessingsState>(
+      listenWhen: (prev, curr) => prev.submissionStatus != curr.submissionStatus,
+      listener: (context, state) {
+        // When user writes a blessing, instantly scroll back to the start
+        if (state.submissionStatus == SubmissionStatus.success) {
+          scrollRowKey.currentState?.resetToStart();
+        }
+      },
       builder: (context, state) {
         switch (state.status) {
           case BlessingsStatus.initial:
@@ -316,19 +319,21 @@ class _BlessingsList extends StatelessWidget {
                 ),
               );
             }
+
+            // Arrange list depending on blessing date (Newest first)
+            final sortedBlessings = List<BlessingModel>.from(state.blessings)
+              ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
             final count = state.totalBlessings;
-            final countLabel = l10n.isArabic
-                ? '$count ${count == 1 ? l10n.t('blessings_count_one') : l10n.t('blessings_count_many')}'
-                : '$count ${count == 1 ? l10n.t('blessings_count_one') : l10n.t('blessings_count_many')}';
+            final countLabel =
+                '$count ${count == 1 ? l10n.t('blessings_count_one') : l10n.t('blessings_count_many')}';
             return Column(
               children: [
                 Text(countLabel, style: AppTextStyles.label(size: 12)),
                 const SizedBox(height: 24),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 560),
-                  child: SingleChildScrollView(
-                    child: _ResponsiveBlessingsGrid(blessings: state.blessings),
-                  ),
+                _AutoScrollBlessingsRow(
+                  key: scrollRowKey,
+                  blessings: sortedBlessings,
                 ),
               ],
             );
@@ -338,35 +343,149 @@ class _BlessingsList extends StatelessWidget {
   }
 }
 
-class _ResponsiveBlessingsGrid extends StatelessWidget {
-  const _ResponsiveBlessingsGrid({required this.blessings});
+class _AutoScrollBlessingsRow extends StatefulWidget {
+  const _AutoScrollBlessingsRow({super.key, required this.blessings});
   final List<BlessingModel> blessings;
 
   @override
-  Widget build(BuildContext context) {
-    final crossAxisCount = Responsive.isMobile(context)
-        ? 1
-        : Responsive.isTablet(context)
-            ? 2
-            : 3;
+  State<_AutoScrollBlessingsRow> createState() => _AutoScrollBlessingsRowState();
+}
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: blessings.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        mainAxisExtent: 160,
+class _AutoScrollBlessingsRowState extends State<_AutoScrollBlessingsRow>
+    with SingleTickerProviderStateMixin {
+  static const double _cardWidth = 280;
+  static const double _cardHeight = 168;
+  static const double _cardSpacing = 16;
+  static const double _pxPerSecond = 26; 
+
+  final ScrollController _scrollController = ScrollController();
+  Ticker? _ticker;
+  Duration _lastElapsed = Duration.zero;
+  bool _paused = false;
+  Timer? _resumeTimer;
+
+  bool get _shouldAutoScroll => widget.blessings.length >= 3;
+
+  double get _singlePassWidth =>
+      widget.blessings.length * (_cardWidth + _cardSpacing);
+
+  @override
+  void initState() {
+    super.initState();
+    if (_shouldAutoScroll) {
+      _ticker = createTicker(_onTick)..start();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _AutoScrollBlessingsRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_shouldAutoScroll && _ticker == null) {
+      _ticker = createTicker(_onTick)..start();
+    } else if (!_shouldAutoScroll) {
+      _ticker?.dispose();
+      _ticker = null;
+    }
+  }
+
+  /// Forces the list back to the zero position to instantly show a new submission
+  void resetToStart() {
+    _resumeTimer?.cancel();
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0.0);
+    }
+    // Pause briefly so the user can read their posted text before it flows away again
+    setState(() => _paused = true);
+    _scheduleResume();
+  }
+
+  void _onTick(Duration elapsed) {
+    if (_paused || !_scrollController.hasClients) {
+      _lastElapsed = elapsed;
+      return;
+    }
+    final dtSeconds =
+        (elapsed - _lastElapsed).inMicroseconds / Duration.microsecondsPerSecond;
+    _lastElapsed = elapsed;
+
+    final passWidth = _singlePassWidth;
+    if (passWidth <= 0) return;
+
+    double next = _scrollController.offset + (_pxPerSecond * dtSeconds);
+    if (next >= passWidth) {
+      next -= passWidth; // Seamless loops back around
+    }
+    _scrollController.jumpTo(next);
+  }
+
+  void _pause() {
+    _resumeTimer?.cancel();
+    setState(() => _paused = true);
+  }
+
+  void _scheduleResume() {
+    _resumeTimer?.cancel();
+    _resumeTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _paused = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.dispose();
+    _resumeTimer?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _shouldAutoScroll
+        ? [...widget.blessings, ...widget.blessings]
+        : widget.blessings;
+
+    final row = SizedBox(
+      height: _cardHeight,
+      child: ListView.separated(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(width: _cardSpacing),
+        itemBuilder: (context, index) {
+          return SizedBox(
+            width: _cardWidth,
+            height: _cardHeight,
+            child: _BlessingCard(blessing: items[index]),
+          );
+        },
       ),
-      itemBuilder: (context, index) {
-        final blessing = blessings[index];
-        return _BlessingCard(blessing: blessing)
-            .animate()
-            .fadeIn(duration: 400.ms, delay: (index * 40).ms)
-            .slideY(begin: 0.1, end: 0);
-      },
+    );
+
+    if (!_shouldAutoScroll) {
+      return Center(
+        child: SizedBox(
+          width: (_cardWidth + _cardSpacing) * items.length,
+          child: row,
+        ),
+      );
+    }
+
+    return MouseRegion(
+      onEnter: (_) => _pause(),
+      onExit: (_) => _scheduleResume(),
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollStartNotification && notification.dragDetails != null) {
+            _pause();
+          } else if (notification is ScrollEndNotification) {
+            _scheduleResume();
+          }
+          return false;
+        },
+        child: row,
+      ),
     );
   }
 }
