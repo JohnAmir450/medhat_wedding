@@ -78,32 +78,28 @@ class _Footer extends StatelessWidget {
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
-              // الخط العادي للجملة
               style: AppTextStyles.body(size: 12, color: AppColors.textMuted),
               children: [
                 TextSpan(text: baseText),
                 TextSpan(
                   text: nameText,
-                  // هنا ستايل الإمضاء المخصص لكل لغة
                   style: isArabic
                       ? GoogleFonts.amiri(
-                          // خط عربي فخم ومائل يليق بإمضاء
                           color: AppColors.gold,
-                          fontSize: 16, // كبرنا الحجم شوية عشان جمال الخط يبان
+                          fontSize: 16, 
                           fontWeight: FontWeight.bold,
                           textStyle: const TextStyle(
                               decoration: TextDecoration
-                                  .underline), // ممكن تضيف خط تحت الاسم لو حاب
+                                  .underline), 
                         )
                       : GoogleFonts.greatVibes(
-                          // الخط الإنجليزي الكيرسيف
                           color: AppColors.gold,
                           fontSize: 19,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 1.1,
                           textStyle: const TextStyle(
                               decoration: TextDecoration
-                                  .underline), // ممكن تضيف خط تحت الاسم لو حاب
+                                  .underline), 
                         ),
                   recognizer: TapGestureRecognizer()
                     ..onTap = _launchFacebookProfile,
