@@ -1,5 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_theme.dart';
@@ -45,9 +48,23 @@ class WeddingHomePage extends StatelessWidget {
 class _Footer extends StatelessWidget {
   const _Footer();
 
+  Future<void> _launchFacebookProfile() async {
+    final Uri url =
+        Uri.parse('https://web.facebook.com/john.amir.1804/'); // رابط بروفايلك
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final isArabic = l10n.isArabic;
+
+    final String baseText =
+        isArabic ? 'صُـنع بـكل حـب بـواسـطة ' : 'Made with love by ';
+    final String nameText = isArabic ? 'جـون أمـير' : 'John Amir';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 32),
@@ -55,11 +72,44 @@ class _Footer extends StatelessWidget {
       alignment: Alignment.center,
       child: Column(
         children: [
-          Icon(Icons.favorite, color: AppColors.gold.withOpacity(0.7), size: 18),
-          const SizedBox(height: 8),
-          Text(
-            l10n.t('footer_text'),
-            style: AppTextStyles.body(size: 12, color: AppColors.textMuted),
+          Icon(Icons.favorite,
+              color: AppColors.gold.withOpacity(0.7), size: 24),
+          const SizedBox(height: 12),
+          RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              // الخط العادي للجملة
+              style: AppTextStyles.body(size: 12, color: AppColors.textMuted),
+              children: [
+                TextSpan(text: baseText),
+                TextSpan(
+                  text: nameText,
+                  // هنا ستايل الإمضاء المخصص لكل لغة
+                  style: isArabic
+                      ? GoogleFonts.amiri(
+                          // خط عربي فخم ومائل يليق بإمضاء
+                          color: AppColors.gold,
+                          fontSize: 16, // كبرنا الحجم شوية عشان جمال الخط يبان
+                          fontWeight: FontWeight.bold,
+                          textStyle: const TextStyle(
+                              decoration: TextDecoration
+                                  .underline), // ممكن تضيف خط تحت الاسم لو حاب
+                        )
+                      : GoogleFonts.greatVibes(
+                          // الخط الإنجليزي الكيرسيف
+                          color: AppColors.gold,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.1,
+                          textStyle: const TextStyle(
+                              decoration: TextDecoration
+                                  .underline), // ممكن تضيف خط تحت الاسم لو حاب
+                        ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = _launchFacebookProfile,
+                ),
+              ],
+            ),
           ),
         ],
       ),

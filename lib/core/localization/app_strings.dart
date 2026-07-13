@@ -19,12 +19,9 @@ class AppLocalizations {
 
   bool get isArabic => language.isArabic;
 
-  String get groomName =>
-      isArabic ? _ArConst.groomName : _EnConst.groomName;
-  String get brideName =>
-      isArabic ? _ArConst.brideName : _EnConst.brideName;
-  String get venueName =>
-      isArabic ? _ArConst.venueName : _EnConst.venueName;
+  String get groomName => isArabic ? _ArConst.groomName : _EnConst.groomName;
+  String get brideName => isArabic ? _ArConst.brideName : _EnConst.brideName;
+  String get venueName => isArabic ? _ArConst.venueName : _EnConst.venueName;
 
   String t(String key) => (isArabic ? _ar : _en)[key] ?? key;
 
@@ -55,7 +52,7 @@ class AppLocalizations {
     'blessings_count_many': 'blessings so far',
     'empty_blessings': 'Be the first to leave a blessing!',
     'load_error': 'Could not load blessings. Please try again.',
-    'footer_text': 'Made with love, for our forever.',
+    "footer_text": "Made with love by John Amir",
     'thank_you_title': 'Medhat & Nesma',
     'thank_you_message':
         'Thank you for your kind words — we hope to see you there to make our joy complete.',
@@ -93,7 +90,7 @@ class AppLocalizations {
     'blessings_count_many': 'تهنئة حتى الآن',
     'empty_blessings': 'كن أول من يرسل تهنئة!',
     'load_error': 'تعذر تحميل التهاني، حاول مرة أخرى.',
-    'footer_text': 'صُنع بحب، لأجل فرحتنا الدائمة.',
+    "footer_text": "صُنع بكل حب بواسطة جون أمير",
     'thank_you_title': 'مدحت ونسمة',
     'thank_you_message': 'شكرًا لكلامكم الجميل، نتمنى نشوفكم علشان تكمل فرحتنا',
     'welcome_title': 'أنتم مدعوون',
